@@ -24,10 +24,9 @@ public class EchoClient {
             Scanner scan = new Scanner(System.in);
             Socket sock = new Socket("localhost", 6013); //Create socket with server
             String echoRequest = null;
-            
+
             System.out.println("This application will send your data to the server, which will echo it back. Enter the character '~' to exit.");
-            
-            
+
             do {
                 System.out.print("Phrase to server: "); //Get echo from user
                 echoRequest = scan.nextLine();
@@ -38,8 +37,7 @@ public class EchoClient {
 
                 System.out.println("Server reply> " + echoedString);
             } while (!echoRequest.equals("~"));
-            
-            
+
             sock.close(); //Close connection
         } catch (IOException ioe) {
             System.err.println(ioe);
@@ -59,18 +57,19 @@ public class EchoClient {
     public static String recieveEcho(Socket sock) {
         String outDataString = null;
         byte[] serverInData = new byte[8000];
-        
+
         try {
             InputStream in = sock.getInputStream(); //Get input stream from server
             byte[] serverInDataTrunc = null;
-            
+
             int nBytesRead = in.read(serverInData); //Integer used to determine the number of bytes to resize the array to
-              
-            if(nBytesRead != -1){ //Ensure the socket connection was not closed
+
+            if (nBytesRead != -1) { //Ensure the socket connection was not closed
                 serverInDataTrunc = Arrays.copyOf(serverInData, nBytesRead); //Resize the original input byte array
+                outDataString = new String(serverInDataTrunc); //Convert bytes to string
+            } else {
+                outDataString = "InputStream returned -1. Socket closed before reading.";
             }
-            
-            outDataString = new String(serverInDataTrunc); //Convert bytes to string
 
         } catch (IOException ioe) {
             System.err.println(ioe);
