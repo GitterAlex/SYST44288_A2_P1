@@ -25,41 +25,56 @@ public class EchoClient {
             String echoRequest = null;
             
             System.out.println("This application will send your data to the server, which will echo it back. Enter the character '~' to exit.");
+            
+            
             do {
                 System.out.print("Phrase to server: "); //Get echo from user
-                echoRequest = scan.next();
+                echoRequest = scan.nextLine();
+                byte[] serverOutData = echoRequest.getBytes();
 
-                sendMessage(echoRequest, sock);
-                String echoedString = recieveEcho(sock);
+                sendMessage(serverOutData, sock); //Send echo request to server
+                String echoedString = recieveEcho(sock); //Get response back
 
                 System.out.println("Server reply> " + echoedString);
             } while (!echoRequest.equals("~"));
-            sock.close();
+            
+            
+            sock.close(); //Close connection
         } catch (IOException ioe) {
             System.err.println(ioe);
         }
     }
 
-    public static void sendMessage(String sendEcho, Socket sock) {
+    public static void sendMessage(byte[] sendEcho, Socket sock) {
         try {
-            PrintWriter rout = new PrintWriter(sock.getOutputStream(), true); //Create output stream to server
-            rout.println(sendEcho); //Send echo string to server
+            DataOutputStream out = new DataOutputStream(sock.getOutputStream()); //Create byte stream to server
+            out.write(sendEcho); //Write the byte to the server
+            
         } catch (IOException ioe) {
             System.err.println(ioe);
         }
     }
 
     public static String recieveEcho(Socket sock) {
-        String line = null;
+        String outDataString = null;
+        byte[] serverInData = new byte[8000];
+        
         try {
             InputStream in = sock.getInputStream();
-            BufferedReader bin = new BufferedReader(new InputStreamReader(in));
-            line = bin.readLine();
+            ByteArrayOutputStream inBuffer = new ByteArrayOutputStream();
+            
+            if((in.read(serverInData, 0, serverInData.length)) != 1){
+            inBuffer.write(serverInData);
+            }
+            
+            inBuffer.flush();
+            outDataString = new String(inBuffer.toByteArray());
+            inBuffer.close();
 
         } catch (IOException ioe) {
             System.err.println(ioe);
         }
-        return line;
+        return outDataString;
     }
 
 }
