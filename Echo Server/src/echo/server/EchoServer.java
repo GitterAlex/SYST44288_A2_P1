@@ -23,43 +23,41 @@ public class EchoServer {
             boolean connected = false;
             ServerSocket sock = new ServerSocket(6013);
             InputStream in = null;
-//            BufferedReader bin = null;
-//            PrintWriter pout = null;
             DataOutputStream out = null;
             ByteArrayOutputStream outBuffer = null;
 
-            byte[] clientInData = new byte[8000]; //WIP! I will try to allocate byte size dynamically
+            byte[] clientInData = new byte[8000]; //A large size is used and will be truncated by the ByteArrayOutputStream
 
             System.out.println("Waiting for a connection");
-            while (connected == false) { //listen for connections
+            
+            while (connected == false) { //Listen for connections
                 client = sock.accept();
                 if (client != null) {
                     System.out.println("Connection established");
                     connected = true;
-
-                    in = client.getInputStream();
-                    out = new DataOutputStream(client.getOutputStream());
-                    outBuffer = new ByteArrayOutputStream();
-//                    bin = new BufferedReader(new InputStreamReader(in));
-//                    pout = new PrintWriter(client.getOutputStream(), true);
                 }
             }
             while (connected == true) { //Read and send the echo request from the client
-                if ((in.read(clientInData, 0, clientInData.length)) != -1) {
-                    outBuffer.write(clientInData);
+                in = client.getInputStream(); //Get input stream from client
+                out = new DataOutputStream(client.getOutputStream()); //Create byte stream to client
+                outBuffer = new ByteArrayOutputStream(); //Setup a dynamic byte array for String conversion
+
+                int bufsize = in.read(clientInData, 0, clientInData.length); //Track the number of bytes read while reading them
+                if (bufsize != -1) { //Ensure the socket connection is still established
+                    outBuffer.write(clientInData, 0, bufsize); //Write the number of bytes read into the dynamic array for clean output
                 } else {
                     connected = false;
                     break;
                 }
-                
+
                 outBuffer.flush();
-                byte[] clientOutData = outBuffer.toByteArray(); //Flush buffer to array of bytes
-                
-                out.write(clientOutData);
+                byte[] clientOutData = outBuffer.toByteArray(); //Send resized array to new array of bytes for the client
+
+                out.write(clientOutData); //Write bytes to client
                 out.flush();
                 outBuffer.close();
             }
-            client.close();           
+            client.close(); //Close client connection if -1 is returned from the input stream
             System.out.println("Connection closed. Terminating.");
         } catch (IOException ioe) {
             System.err.println(ioe);
