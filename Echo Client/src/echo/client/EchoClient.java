@@ -7,6 +7,7 @@ package echo.client;
 
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
 import java.util.Scanner;
 
 /**
@@ -47,7 +48,7 @@ public class EchoClient {
 
     public static void sendMessage(byte[] sendEcho, Socket sock) {
         try {
-            DataOutputStream out = new DataOutputStream(sock.getOutputStream()); //Create byte stream to server
+            OutputStream out = sock.getOutputStream(); //Create byte stream to server
             out.write(sendEcho); //Write the byte to the server
 
         } catch (IOException ioe) {
@@ -61,17 +62,15 @@ public class EchoClient {
         
         try {
             InputStream in = sock.getInputStream(); //Get input stream from server
-            ByteArrayOutputStream inBuffer = new ByteArrayOutputStream(); //Setup a dynamic byte array for String conversion
-            int bufsize = in.read(serverInData, 0, serverInData.length); //Integer used to determine the number of bytes to write to the buffer
+            byte[] serverInDataTrunc = null;
             
-            if(bufsize != -1){ //Ensure the socket connection was not closed
-            inBuffer.write(serverInData, 0, bufsize); //Write the number of bytes read into the dynamic array for clean output 
+            int nBytesRead = in.read(serverInData); //Integer used to determine the number of bytes to resize the array to
+              
+            if(nBytesRead != -1){ //Ensure the socket connection was not closed
+                serverInDataTrunc = Arrays.copyOf(serverInData, nBytesRead); //Resize the original input byte array
             }
             
-            inBuffer.flush();
-            outDataString = new String(inBuffer.toByteArray()); //Convert bytes to string
-            
-            inBuffer.close();
+            outDataString = new String(serverInDataTrunc); //Convert bytes to string
 
         } catch (IOException ioe) {
             System.err.println(ioe);

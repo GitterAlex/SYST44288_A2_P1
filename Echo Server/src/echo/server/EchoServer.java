@@ -7,6 +7,7 @@ package echo.server;
 
 import java.net.*;
 import java.io.*;
+import java.util.Arrays;
 
 /**
  *
@@ -23,10 +24,9 @@ public class EchoServer {
             boolean connected = false;
             ServerSocket sock = new ServerSocket(6013);
             InputStream in = null;
-            DataOutputStream out = null;
-            ByteArrayOutputStream outBuffer = null;
+            OutputStream out = null;
 
-            byte[] clientInData = new byte[8000]; //A large size is used and will be truncated by the ByteArrayOutputStream
+            byte[] clientInData = new byte[8000]; //A large size is used and will be truncated into another array for output
 
             System.out.println("Waiting for a connection");
             
@@ -39,23 +39,20 @@ public class EchoServer {
             }
             while (connected == true) { //Read and send the echo request from the client
                 in = client.getInputStream(); //Get input stream from client
-                out = new DataOutputStream(client.getOutputStream()); //Create byte stream to client
-                outBuffer = new ByteArrayOutputStream(); //Setup a dynamic byte array for String conversion
-
-                int bufsize = in.read(clientInData, 0, clientInData.length); //Track the number of bytes read while reading them
-                if (bufsize != -1) { //Ensure the socket connection is still established
-                    outBuffer.write(clientInData, 0, bufsize); //Write the number of bytes read into the dynamic array for clean output
+                out = client.getOutputStream(); //Create byte stream to client
+                byte[] clientOutData;
+                
+                int nBytesRead = in.read(clientInData); //Track the number of bytes read while reading them
+                
+                if (nBytesRead != -1) { //Ensure the socket connection is still established
+                    clientOutData = Arrays.copyOf(clientInData, nBytesRead); //Resize the original input byte array
                 } else {
                     connected = false;
                     break;
                 }
 
-                outBuffer.flush();
-                byte[] clientOutData = outBuffer.toByteArray(); //Send resized array to new array of bytes for the client
-
                 out.write(clientOutData); //Write bytes to client
                 out.flush();
-                outBuffer.close();
             }
             client.close(); //Close client connection if -1 is returned from the input stream
             System.out.println("Connection closed. Terminating.");
